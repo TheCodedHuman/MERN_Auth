@@ -7,8 +7,8 @@
   "type": "module",
   "main": "server.js",
   "scripts": {
-    "start": "node -r dotenv/config --experimental-json-modules server.js",
-    "dev": "nodemon -r dotenv/config --experimental-json-modules server.js"
+    "start": "node -r dotenv/config --experimental-json-modules src/server.js",
+    "dev": "nodemon -r dotenv/config --experimental-json-modules src/server.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.2",

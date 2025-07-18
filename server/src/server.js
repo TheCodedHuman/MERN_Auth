@@ -6,12 +6,13 @@ import express from 'express'
 import cors from 'cors'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
+import connectDB from './db/mongodb.js'
 
 
 // literals
 const app = express()
-const port = process.env.PORT || 4000
-
+const port = process.env.PORT || 4000;
+connectDB()
 
 // defined
 app.use(express.json({ limit: "16kb" }))
