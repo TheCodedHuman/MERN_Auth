@@ -44,7 +44,7 @@ const loginUser = asyncHandler(async (req, res) => {
     if (!(email && password)) throw new ApiError(400, "Provide yo damn details")
     const user = await User.findOne({ email: email.toLowerCase().trim() })                  // when upper 'if' is false
 
-    if (!user) throw new ApiError(404, "user extinct")
+    if (!user) throw new ApiError(404, "User does not exist :(")
     const isPasswordValid = await user.isPasswordCorrect(password)                          // from { User }
 
     if (!isPasswordValid) throw new ApiError(401, "You are Sus")
@@ -64,6 +64,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
 
 const logoutUser = asyncHandler(async (req, res) => {
+    if (!req.user?._id) throw new ApiError(401, "User NOT authenticated")
+
     await User.findByIdAndUpdate(
         req.user._id,
         {
@@ -104,9 +106,9 @@ const registerUser = asyncHandler(async (req, res) => {
         if (existedUser) throw new ApiError(409, "yo just found your ex XD")
 
         const user = await User.create({
-            name: name.toLowerCase().trim(),
+            name: name.trim(),
             email: email.toLowerCase().trim(),
-            password: password.toLowerCase().trim()
+            password: password.trim()
         })
 
         const createdUser = await User.findById(user._id).select("-password")
@@ -121,10 +123,15 @@ const registerUser = asyncHandler(async (req, res) => {
 })
 
 
+const getCurrentUser = asyncHandler( async (req, res) => {
+    return res
+    .status(200)
+    .json(200, req.user, "Current user fetched successfully")
+})
+
 
 // const refreshAccessToken;
 // const changeCurrentPassword;
-// const getCurrentUser;
 
 
 
@@ -133,6 +140,7 @@ export {
     loginUser,
     registerUser,
     logoutUser,
+    getCurrentUser,
     generateAccessAndRefreshTokens
 }
 
