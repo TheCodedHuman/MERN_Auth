@@ -1,0 +1,15 @@
+/*--------------------------------- GLOBAL --------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&family=Sour+Gummy:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border: 0.2px solid grey;
+}
+
+:root {
+    font-family: "Outfit", sans-serif;
+    
+}

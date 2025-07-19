@@ -117,7 +117,20 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# MisX
+.DS_*
+*.log
+logs
+**/*.backup.*
+**/*.back.*
 
+node_modules
+bower_components
 
-# End of https://mrkandreev.name/snippets/gitignore-generator/#Node
+*.sublime*
+
+psd
+thumb
+sketch
+
+# End of https://mrkandreev.name/snippets/gitignore-generator/#Node,react
+
