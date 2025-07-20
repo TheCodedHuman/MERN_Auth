@@ -4,16 +4,13 @@
 import { ApiError, ApiResponse } from "../utils/ApiUtils.js"
 import { User } from "../models/user.model.js"
 import asyncHandler from '../utils/asyncHandler.js'
-
-// literals
-const options = {
-    httpOnly: true,
-    secure: true
-}
+import sendEmail from "../utils/mailSender.js"
+import { sendOTP, verifyOTP } from "../utils/OTPutils.js"
+import { options } from "../constants.js"
 
 
 // defined
-const generateAccessAndRefreshTokens = async (userId) => {
+const generateAccessAndRefreshTokens = async (userId) => {                  // basically cookies
     try {
         const user = await User.findById(userId)
         const accessToken = user.generateAccessToken()                      // from { User }
@@ -29,38 +26,63 @@ const generateAccessAndRefreshTokens = async (userId) => {
 }
 
 
-const loginUser = asyncHandler(async (req, res) => {
+const sendOtpToUser = asyncHandler(async (req, res) => {
 
-    // req.body -> data
-    // take email
-    // user in db ?
-    // password check
-    // access and refresh token generate
+    // get email and password from frontend
+    // check user entered something or not
+    // does user exists in db for login
+    // generate otp code
+    // put otp code and expiry time in User model
     // send cookie
 
     const { email, password } = req.body
     // console.debug(email)          // check
 
-    if (!(email && password)) throw new ApiError(400, "Provide yo damn details")
+    if (!(email && password)) throw new ApiError(400, "Username and email are required")
     const user = await User.findOne({ email: email.toLowerCase().trim() })                  // when upper 'if' is false
 
     if (!user) throw new ApiError(404, "User does not exist :(")
     const isPasswordValid = await user.isPasswordCorrect(password)                          // from { User }
 
-    if (!isPasswordValid) throw new ApiError(401, "You are Sus")
-    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id)
-    const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
+    if (!isPasswordValid) throw new ApiError(401, "Invalid credentials")
+    await sendOTP(user)
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
         .json(
-            new ApiResponse(200, {
-                user: loggedInUser, accessToken, refreshToken
-            }, "User logged in successfully")
+            new ApiResponse(200,
+                { userId: user._id },
+                "OTP sent to email. Proceed to verify.")
         )
 })
+
+
+const verifyOtpFromUser = asyncHandler(async (req, res) => {
+    const { userId, otp } = req.body;
+
+    if (!userId || !otp) {
+        throw new ApiError(400, "User ID and OTP are required");
+    }
+    const user = await User.findById(userId);
+
+    if (!user) throw new ApiError(404, "User not found");
+
+    try {
+        await verifyOTP(user, otp)
+    } catch (error) {
+        throw new ApiError(401, error.message || "OTP verification failed")
+    }
+
+
+    // Generate tokens
+    const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(user._id);
+    const loggedInUser = await User.findById(user._id).select("-password -refreshToken");
+
+    return res.status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(new ApiResponse(200, { user: loggedInUser, accessToken, refreshToken }, "User Verified and Login successful"));
+});
 
 
 const logoutUser = asyncHandler(async (req, res) => {
@@ -114,30 +136,43 @@ const registerUser = asyncHandler(async (req, res) => {
         const createdUser = await User.findById(user._id).select("-password")
         if (!createdUser) throw new ApiError(500, "Something went wrong while registering the user")
 
+        // sending welcome email
+        const mailDetails = {
+            from: process.env.SENDER_EMAIL,
+            to: email,
+            subject: 'Welcome to AuthForge',
+            text: `Welcome to AuthForge website ${name}! Your account has been created with email id: ${email}`
+        }
+
+        try {
+            await sendEmail.sendMail(mailDetails)
+        } catch (error) {
+            console.error("Welcome email FAILED", error.message)
+        }
+
         return res
             .status(201)
             .json(new ApiResponse(200, createdUser, "User registered successfully"))
     } catch (error) {
-        throw new ApiError(500, "User registration operation FAILED")
+        if (error instanceof ApiError) throw error;
+
+        throw new ApiError(500, "User registration operation FAILED"); // fallback if it's a weird error
     }
 })
 
 
-const getCurrentUser = asyncHandler( async (req, res) => {
+const getCurrentUser = asyncHandler(async (req, res) => {
     return res
-    .status(200)
-    .json(200, req.user, "Current user fetched successfully")
+        .status(200)
+        .json(200, req.user, "Current user fetched successfully")
 })
-
-
-// const refreshAccessToken;
-// const changeCurrentPassword;
 
 
 
 // exports
 export {
-    loginUser,
+    sendOtpToUser,
+    verifyOtpFromUser,
     registerUser,
     logoutUser,
     getCurrentUser,
