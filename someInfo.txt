@@ -113,3 +113,68 @@ console.warn Yellow color text with icon
 console.error Red Color text with icon
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+/*
+
+const sendEmail = async (to, subject, html) => {
+    try {
+        const transporter = nodemailer.createTransport({
+            host: process.env.SMTP_HOST,
+            port: process.env.SMTP_PORT,
+            auth: {
+                user: process.env.SMTP_USER,
+                pass: process.env.SMTP_PASS
+            }
+        });
+
+        const info = await transporter.sendMail({
+            from: `"Chai Backend" <${process.env.SMTP_USER}>`,
+            to,
+            subject,
+            html
+        });
+
+        return info;
+    } catch (error) {
+        console.error("Error sending email:", error.message);
+        throw error;
+    }
+};
+
+*/
+
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+import jwt from 'jsonwebtoken'
+import { User } from '../models/user.model.js'
+
+const userAuth = async(req, res, next) => {
+    const { token } = req.cookies
+
+    if (!token) {
+        return res.json({ success: false, message: 'Not Authorized, Login Again' })
+    }
+
+    try {
+        const tokenDecode = jwt.verify(token, process.env.JWT_SECRET)
+
+        if (tokenDecode.id) {
+            req.body.userId = tokenDecode.id
+        } else {
+            return res.json({ success: false, message: 'Not Authorized Login Again' })
+        }
+    } catch (error) {
+        res.json({ success: false, message, error: error.message })
+    }
+}
+
+export default userAuth
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+

@@ -29,6 +29,6 @@ const verifyJWT = asyncHandler(async (req, res, next) => {
     }
 })
 
-// exports
+// exports`
 export default verifyJWT
 

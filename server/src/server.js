@@ -11,6 +11,9 @@ import userRouter from "./routes/user.routes.js"
 
 
 // literals
+dotenv.config({ 
+    path: './.env'
+})
 const app = express()
 const port = process.env.PORT || 4000;
 connectDB()                                     // can be used as a Promise with .then().catch()

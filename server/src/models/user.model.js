@@ -60,7 +60,7 @@ userSchema.pre('save', async function (next) {                         // contex
 
 
 userSchema.methods.isPasswordCorrect = async function (password) {
-    return await bcrypt.compare(password, this.password)                // this.password = hashed pswd
+    return await bcrypt.compare(password, this.password)                // this.password == hashed pswd
 }
 
 
